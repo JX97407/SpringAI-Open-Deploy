@@ -18,7 +18,9 @@ public class ChatService {
     }
 
     public String reply(String question) {
+
         return chatClient.prompt()
+                .system("助手说话非常简洁明了")
                 .user(question)
                 .call()
                 .content();

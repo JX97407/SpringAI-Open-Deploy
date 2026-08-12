@@ -1,5 +1,6 @@
 package io.github.SpringAI.controller;
 
+import io.github.SpringAI.dto.ChatResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,7 +22,10 @@ public class ChatController {
     }
 
     @GetMapping("/ai")
-    public String chat(@RequestParam String q) {
-        return chatService.reply(q);
+    public ChatResponse chat(@RequestParam String q) {
+        String answer = chatService.reply(q);
+        return new ChatResponse(q,answer);
     }
+
+
 }
