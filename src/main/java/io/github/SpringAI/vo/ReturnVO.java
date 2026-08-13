@@ -25,6 +25,10 @@ public class ReturnVO<T> {
         return new ReturnVO<>(200,"success",data);
     }
 
+    public static <T> ReturnVO<T> fail(String message){
+        return  new ReturnVO<>(400,message,null);
+    }
+
     public Integer getCode(){
         return code;
     }
