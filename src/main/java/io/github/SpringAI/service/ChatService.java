@@ -1,6 +1,7 @@
 package io.github.SpringAI.service;
 
 import io.github.SpringAI.dto.ChatResponse;
+import io.github.SpringAI.exception.AIChatException;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,16 +34,24 @@ public class ChatService {
 
         log.info("AI chat started , model={}, question={}",model,question);
 
-        String answer = chatClient.prompt()
-                .system("你是一名有优秀的java学习助手")
-                .user(question)
-                .call()
-                .content();
+        try {
+            String answer = chatClient.prompt()
+                    .system("你是一名有优秀的java学习助手")
+                    .user(question)
+                    .call()
+                    .content();
 
-        long durationMs = System.currentTimeMillis() - startTime;
+            long durationMs = System.currentTimeMillis() - startTime;
 
-        log.info("AI chat finished, model={}, durationMs={},answerLength={}",model,durationMs,answer.length());
+            log.info("AI chat finished, model={}, durationMs={},answerLength={}", model, durationMs, answer.length());
 
-        return new ChatResponse(question,answer,model,durationMs);
+            return new ChatResponse(question, answer, model, durationMs);
+        }catch (Exception e){
+            long durationMs = System.currentTimeMillis() - startTime;
+
+            log.error("AI chat failed, model={}, durationMs={}, question={}", model, durationMs, question, e);
+
+            throw new AIChatException("AI模型调用失败，请稍后重试",e);
+        }
     }
 }

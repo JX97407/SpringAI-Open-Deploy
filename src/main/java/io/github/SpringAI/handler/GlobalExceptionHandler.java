@@ -1,5 +1,6 @@
 package io.github.SpringAI.handler;
 
+import io.github.SpringAI.exception.AIChatException;
 import io.github.SpringAI.vo.ReturnVO;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,6 +24,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ReturnVO<Void> handleException(Exception e){
-        return new  ReturnVO<>(500,"服务器异常",null);
+        return new  ReturnVO<>(500,"服务器内部异常",null);
+    }
+
+    @ExceptionHandler(AIChatException.class)
+    public ReturnVO<Void> handleAIChatException(AIChatException e){
+        return new ReturnVO<>(500,e.getMessage(),null);
     }
 }
