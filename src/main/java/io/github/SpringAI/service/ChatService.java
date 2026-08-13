@@ -20,7 +20,7 @@ public class ChatService {
     public String reply(String question) {
 
         return chatClient.prompt()
-                .system("助手说话非常简洁明了")
+                .system("你是一名有优秀的java学习助手")
                 .user(question)
                 .call()
                 .content();

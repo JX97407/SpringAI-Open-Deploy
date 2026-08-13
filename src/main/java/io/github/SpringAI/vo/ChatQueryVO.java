@@ -1,13 +1,16 @@
 package io.github.SpringAI.vo;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
- * @Description AI对话请求对象
+ * @Description AI对话请求对象类
  * @Author 刘争伟
  * @Date 2026/8/12 下午5:56
  **/
 
 public class ChatQueryVO {
 
+@NotBlank(message = "question不能为空")
     private String question;
 
     public ChatQueryVO() {
