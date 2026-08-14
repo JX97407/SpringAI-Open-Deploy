@@ -1,6 +1,7 @@
 package io.github.SpringAI.service;
 
 import io.github.SpringAI.dto.ChatResponse;
+import io.github.SpringAI.enums.ChatRole;
 import io.github.SpringAI.exception.AIChatException;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,11 +32,11 @@ public class ChatService {
         this.systemPrompt = systemPrompt;
     }
 
-    public ChatResponse reply(String question,String requestSystemPrompt) {
+    public ChatResponse reply(String question, String requestSystemPrompt, ChatRole role) {
 
         long startTime = System.currentTimeMillis();
 
-        String finalSystemPrompt = getFinalSystemPrompt(requestSystemPrompt);
+        String finalSystemPrompt = getFinalSystemPrompt(requestSystemPrompt,role);
 
         log.info("AI chat started , model={}, question={}",model,question);
 
@@ -60,10 +61,15 @@ public class ChatService {
         }
     }
 
-    private String getFinalSystemPrompt(String requestSystemPrompt){
-        if (requestSystemPrompt == null || requestSystemPrompt.isBlank()){
-            return systemPrompt;
+    private String getFinalSystemPrompt(String requestSystemPrompt, ChatRole role){
+        if (requestSystemPrompt != null && !requestSystemPrompt.isBlank()){
+            return requestSystemPrompt;
         }
-        return requestSystemPrompt;
+
+        if (role != null){
+            return role.getRolePrompt();
+        }
+
+        return systemPrompt;
     }
 }
