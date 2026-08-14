@@ -11,8 +11,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  **/
 
 @SpringBootApplication
-public class SpringAiApplication {
+public class SpringAIApplication {
     public static void main(String[] args) {
-        SpringApplication.run(SpringAiApplication.class,args);
+        SpringApplication.run(SpringAIApplication.class,args);
     }
 }
