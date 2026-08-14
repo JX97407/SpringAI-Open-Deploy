@@ -15,4 +15,7 @@ public class ChatQueryVO {
 @NotBlank(message = "question不能为空")
 @Size(max = 2000,message = "question长度不能超过2000个字符")
     private String question;
+
+@Size(max = 500, message = "systemPrompt长度不能超过500个字符")
+    private String systemPrompt;
 }

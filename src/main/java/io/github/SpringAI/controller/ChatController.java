@@ -24,7 +24,10 @@ public class ChatController {
 
     @PostMapping("/ai/chat")
     public ReturnVO<ChatResponse> chat(@Valid @RequestBody ChatQueryVO chatQueryVO) {
-        ChatResponse response = chatService.reply(chatQueryVO.getQuestion());
+        ChatResponse response = chatService.reply(
+                chatQueryVO.getQuestion(),
+                chatQueryVO.getSystemPrompt()
+        );
         return ReturnVO.success(response);
     }
 
