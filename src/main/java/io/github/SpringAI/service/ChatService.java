@@ -31,15 +31,17 @@ public class ChatService {
         this.systemPrompt = systemPrompt;
     }
 
-    public ChatResponse reply(String question,String systemPrompt) {
+    public ChatResponse reply(String question,String requestSystemPrompt) {
 
         long startTime = System.currentTimeMillis();
+
+        String finalSystemPrompt = getFinalSystemPrompt(requestSystemPrompt);
 
         log.info("AI chat started , model={}, question={}",model,question);
 
         try {
             String answer = chatClient.prompt()
-                    .system(systemPrompt)
+                    .system(finalSystemPrompt)
                     .user(question)
                     .call()
                     .content();
