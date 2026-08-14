@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ReturnVO<Void> handleMethodArgumentNotVaildException(MethodArgumentNotValidException e){
+    public ReturnVO<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e){
         String message = e.getBindingResult()
                 .getFieldError()
                 .getDefaultMessage();
@@ -24,11 +24,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ReturnVO<Void> handleException(Exception e){
-        return new  ReturnVO<>(500,"服务器内部异常",null);
+        return ReturnVO.fail(500, "服务器异常");
     }
 
     @ExceptionHandler(AIChatException.class)
     public ReturnVO<Void> handleAIChatException(AIChatException e){
-        return new ReturnVO<>(500,e.getMessage(),null);
+        return ReturnVO.fail(500, e.getMessage());
     }
 }
