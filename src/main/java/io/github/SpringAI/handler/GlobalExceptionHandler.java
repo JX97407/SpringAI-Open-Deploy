@@ -2,6 +2,7 @@ package io.github.SpringAI.handler;
 
 import io.github.SpringAI.exception.AIChatException;
 import io.github.SpringAI.vo.ReturnVO;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -30,5 +31,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AIChatException.class)
     public ReturnVO<Void> handleAIChatException(AIChatException e){
         return ReturnVO.fail(500, e.getMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ReturnVO<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e){
+        return ReturnVO.fail(400, "请求体格式错误，请检查JSON格式；role可选值为TEACHER、INTERVIEWER、CODE_REVIEWER");
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ReturnVO<Void> handleIllegalArgumentException(IllegalArgumentException e){
+        return ReturnVO.fail(400, e.getMessage());
     }
 }

@@ -32,11 +32,11 @@ public class ChatService {
         this.systemPrompt = systemPrompt;
     }
 
-    public ChatResponse reply(String question, String requestSystemPrompt, ChatRole role) {
+    public ChatResponse reply(String question,  String requestRole) {
 
         long startTime = System.currentTimeMillis();
 
-        String finalSystemPrompt = getFinalSystemPrompt(requestSystemPrompt,role);
+        String finalSystemPrompt = getFinalSystemPrompt(requestRole);
 
         log.info("AI chat started , model={}, question={}",model,question);
 
@@ -61,10 +61,8 @@ public class ChatService {
         }
     }
 
-    private String getFinalSystemPrompt(String requestSystemPrompt, ChatRole role){
-        if (requestSystemPrompt != null && !requestSystemPrompt.isBlank()){
-            return requestSystemPrompt;
-        }
+    private String getFinalSystemPrompt(String requestRole){
+        ChatRole role = ChatRole.fromName(requestRole);
 
         if (role != null){
             return role.getRolePrompt();

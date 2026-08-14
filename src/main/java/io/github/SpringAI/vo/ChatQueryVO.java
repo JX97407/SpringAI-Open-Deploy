@@ -1,6 +1,6 @@
 package io.github.SpringAI.vo;
 
-import io.github.SpringAI.enums.ChatRole;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -17,8 +17,6 @@ public class ChatQueryVO {
 @Size(max = 2000,message = "question长度不能超过2000个字符")
     private String question;
 
-@Size(max = 500, message = "systemPrompt长度不能超过500个字符")
-    private String systemPrompt;
-
-    private ChatRole role;
+@Size(max = 30, message = "role长度不能超过30个字符")
+    private String role;
 }
