@@ -9,7 +9,8 @@ public record ChatResponse(
         String question,
         String answer,
         String model,
-        Long durationMs  //调用耗时，单位毫秒
+        Long durationMs,//调用耗时，单位毫秒
+        String sessionId
 ) {
 
 }

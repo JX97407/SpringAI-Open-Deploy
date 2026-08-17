@@ -26,7 +26,8 @@ public class ChatController {
     public ReturnVO<ChatResponse> chat(@Valid @RequestBody ChatQueryVO chatQueryVO) {
         ChatResponse response = chatService.reply(
                 chatQueryVO.getQuestion(),
-                chatQueryVO.getRole()
+                chatQueryVO.getRole(),
+                chatQueryVO.getSessionId()
         );
         return ReturnVO.success(response);
     }

@@ -3,6 +3,8 @@ package io.github.SpringAI.service;
 import io.github.SpringAI.dto.ChatResponse;
 import io.github.SpringAI.enums.ChatRole;
 import io.github.SpringAI.exception.AIChatException;
+import io.github.SpringAI.memory.ChatMemoryService;
+import io.github.SpringAI.memory.ConversationMessage;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,28 +24,33 @@ public class ChatService {
     private final ChatClient chatClient;
     private final String model;
     private final String systemPrompt;
+    private final ChatMemoryService chatMemoryService;
 
     public ChatService(ChatClient chatClient,
                        @Value("${spring.ai.ollama.chat.model}") String model,
-                       @Value("${app.ai.system-prompt}") String systemPrompt) {
+                       @Value("${app.ai.system-prompt}") String systemPrompt,
+                       ChatMemoryService chatMemoryService) {
 
         this.chatClient = chatClient;
         this.model = model;
         this.systemPrompt = systemPrompt;
+        this.chatMemoryService = chatMemoryService;
     }
 
-    public ChatResponse reply(String question,  String requestRole) {
+    public ChatResponse reply(String question,  String requestRole, String sessionId) {
 
         long startTime = System.currentTimeMillis();
 
         String finalSystemPrompt = getFinalSystemPrompt(requestRole);
+        String history = chatMemoryService.buildContext(sessionId);
+        String userPrompt = buildUserPrompt(history,question);
 
         log.info("AI chat started , model={}, question={}",model,question);
 
         try {
             String answer = chatClient.prompt()
                     .system(finalSystemPrompt)
-                    .user(question)
+                    .user(userPrompt)
                     .call()
                     .content();
 
@@ -51,7 +58,15 @@ public class ChatService {
 
             log.info("AI chat finished, model={}, durationMs={},answerLength={}", model, durationMs, answer.length());
 
-            return new ChatResponse(question, answer, model, durationMs);
+            chatMemoryService.addMessage(
+                    sessionId,
+                    new ConversationMessage("user",question)
+            );
+            chatMemoryService.addMessage(
+                    sessionId,
+                    new ConversationMessage("assistant",answer)
+            );
+            return new ChatResponse(question, answer, model, durationMs, sessionId);
         }catch (Exception e){
             long durationMs = System.currentTimeMillis() - startTime;
 
@@ -60,7 +75,6 @@ public class ChatService {
             throw new AIChatException("AI模型调用失败，请稍后重试",e);
         }
     }
-
     private String getFinalSystemPrompt(String requestRole){
         ChatRole role = ChatRole.fromName(requestRole);
 
@@ -70,4 +84,22 @@ public class ChatService {
 
         return systemPrompt;
     }
+
+    private String buildUserPrompt(
+            String history,
+            String question
+    ){
+        if (history == null || history.isBlank()){
+            return question;
+        }
+        return """
+                以下是之前的对话记录：
+                %s
+                
+                当前问题：
+                %s
+                """.formatted(history,question);
+    }
 }
+
+

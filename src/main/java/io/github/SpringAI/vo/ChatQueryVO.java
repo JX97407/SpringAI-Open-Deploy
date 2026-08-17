@@ -19,4 +19,7 @@ public class ChatQueryVO {
 
 @Size(max = 30, message = "role长度不能超过30个字符")
     private String role;
+
+@Size(max = 64,message = "sessionId长度不能超过64个字符")
+    private String sessionId;
 }
