@@ -56,8 +56,6 @@ public class ChatService {
 
             long durationMs = System.currentTimeMillis() - startTime;
 
-            log.info("AI chat finished, model={}, durationMs={},answerLength={}", model, durationMs, answer.length());
-
             chatMemoryService.addMessage(
                     sessionId,
                     new ConversationMessage("user",question)
@@ -66,6 +64,9 @@ public class ChatService {
                     sessionId,
                     new ConversationMessage("assistant",answer)
             );
+
+            log.info("AI chat finished, model={}, durationMs={},answerLength={}", model, durationMs, answer.length());
+
             return new ChatResponse(question, answer, model, durationMs, sessionId);
         }catch (Exception e){
             long durationMs = System.currentTimeMillis() - startTime;
