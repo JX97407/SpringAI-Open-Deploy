@@ -19,7 +19,7 @@ import java.util.List;
 @RequestMapping("/ai")
 public class RoleController {
 
-    @GetMapping("roles")
+    @GetMapping("/roles")
     public ReturnVO<List<RoleOption>>listRoles(){
         List<RoleOption> roles = Arrays.stream(ChatRole.values())
                 .map(role -> new RoleOption(
