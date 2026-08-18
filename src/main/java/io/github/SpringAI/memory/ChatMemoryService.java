@@ -49,4 +49,12 @@ public class ChatMemoryService {
                 ).collect(Collectors.joining("\n"));
     }
 
+    public void clearHistory(String sessionId){
+        if (sessionId == null || sessionId.isBlank()){
+            return;
+        }
+
+        sessions.remove(sessionId);
+    }
+
 }
