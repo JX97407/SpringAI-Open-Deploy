@@ -12,7 +12,7 @@ app:
   ai:
     system-prompt: 你是一名耐心、简洁、适合初学者的Java和Spring AI 学习助手。回答时先给结论，再分步骤解释。
     memory:
-      max-messages:20
+      max-messages: 20
 
 
 server:
