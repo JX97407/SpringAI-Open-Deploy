@@ -1,5 +1,6 @@
 package io.github.SpringAI.memory;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class ChatMemoryService {
 
     private final Map<String, List<ConversationMessage>> sessions = new ConcurrentHashMap<>();
+    private final int maxMessages;
 
     public List<ConversationMessage> getHistory(String sessionId){
         if (sessionId == null || sessionId.isBlank()){
@@ -35,10 +37,17 @@ public class ChatMemoryService {
         if (sessionId == null || sessionId.isBlank()){
             return;
         }
-        sessions.computeIfAbsent(
+        List<ConversationMessage> messages = sessions.computeIfAbsent(
                 sessionId,
                 key -> new CopyOnWriteArrayList<>()
-        ).add(message);
+        );
+
+        messages.add(message);
+
+        //只保留最近的消息，避免历史记录和提示词无限增长
+        while(messages.size()>maxMessages){
+            messages.remove(0);
+        }
     }
 
     public String buildContext(String sessionId){
@@ -55,6 +64,12 @@ public class ChatMemoryService {
         }
 
         sessions.remove(sessionId);
+    }
+
+    public ChatMemoryService(
+            @Value("${app.ai.memory.max-messages:20}") int maxMessages
+    ){
+        this.maxMessages = maxMessages;
     }
 
 }
