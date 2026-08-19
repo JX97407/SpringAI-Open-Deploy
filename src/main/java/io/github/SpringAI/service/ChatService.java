@@ -24,19 +24,16 @@ public class ChatService {
 
     private final ChatClient chatClient;
     private final String model;
-    private final String systemPrompt;
     private final ChatMemoryService chatMemoryService;
     private final AIProperties aiProperties;
 
     public ChatService(ChatClient chatClient,
                        @Value("${spring.ai.ollama.chat.model}") String model,
-                       @Value("${app.ai.system-prompt}") String systemPrompt,
                        ChatMemoryService chatMemoryService,
                        AIProperties aiProperties) {
 
         this.chatClient = chatClient;
         this.model = model;
-        this.systemPrompt = systemPrompt;
         this.chatMemoryService = chatMemoryService;
         this.aiProperties = aiProperties;
     }
