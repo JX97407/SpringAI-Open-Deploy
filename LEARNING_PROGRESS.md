@@ -60,13 +60,15 @@
 
 ## 当前学习节点
 
-下一步验证并完成聊天历史数量限制：
+当前阶段：完成配置类重构并准备接入 MySQL。
+
+当前阶段补充：配置类 `AIProperties` 已创建，并使用 `@ConfigurationProperties(prefix = "app.ai")` 绑定自定义配置；接下来完成重复注入清理，再进入 MySQL 持久化。
 
 - 在 `application.yml` 中增加 `app.ai.memory.max-messages` 配置。
-- 在 `ChatMemoryService` 中通过 `@Value` 读取最大消息数量。
+- 已在 `ChatMemoryService` 中通过 `AIProperties` 读取最大消息数量。
 - 添加新消息后删除最早消息，避免内存和模型提示词无限增长。
 - 使用 APIFox 连续发送多轮消息，确认历史记录最多保留配置数量。
-- 使用 `mvn test` 验证项目编译。
+- 待清理 `ChatService` 中重复的 `systemPrompt` 字段和 `@Value` 注入，并使用 `mvn test`、`mvn spring-boot:run` 验证配置重构。
 
 ## 学习中需要重点理解的知识
 
@@ -93,3 +95,11 @@
 - 新增代码需要说明文件位置、类的用途和调用链路。
 - 关键代码加必要注释，不逐行添加无意义注释。
 - 优先使用 APIFox 测试，不依赖 PowerShell 的中文输出判断结果。
+
+## 最新进度补充
+
+- `AIProperties` 已创建，用于绑定 `app.ai` 配置。
+- 已增加 `app.ai.memory.max-messages`，并在内存服务中限制历史消息数量。
+- `ChatService` 中仍有重复的 `systemPrompt` 字段和 `@Value` 注入，下一步先清理。
+- 当前数据库方案确定为 MySQL，计划使用 Spring Data JPA。
+- 后续每个学习阶段由助手自动更新本文件和 `AGENTS.md`，用户检查后提交到 GitHub。
