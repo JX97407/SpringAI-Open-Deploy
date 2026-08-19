@@ -1,5 +1,6 @@
 package io.github.SpringAI.memory;
 
+import io.github.SpringAI.config.AIProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -66,10 +67,8 @@ public class ChatMemoryService {
         sessions.remove(sessionId);
     }
 
-    public ChatMemoryService(
-            @Value("${app.ai.memory.max-messages:20}") int maxMessages
-    ){
-        this.maxMessages = maxMessages;
+    public ChatMemoryService(AIProperties aiProperties){
+        this.maxMessages = aiProperties.memory().maxMessages();
     }
 
 }

@@ -1,5 +1,6 @@
 package io.github.SpringAI.service;
 
+import io.github.SpringAI.config.AIProperties;
 import io.github.SpringAI.dto.ChatResponse;
 import io.github.SpringAI.enums.ChatRole;
 import io.github.SpringAI.exception.AIChatException;
@@ -25,16 +26,19 @@ public class ChatService {
     private final String model;
     private final String systemPrompt;
     private final ChatMemoryService chatMemoryService;
+    private final AIProperties aiProperties;
 
     public ChatService(ChatClient chatClient,
                        @Value("${spring.ai.ollama.chat.model}") String model,
                        @Value("${app.ai.system-prompt}") String systemPrompt,
-                       ChatMemoryService chatMemoryService) {
+                       ChatMemoryService chatMemoryService,
+                       AIProperties aiProperties) {
 
         this.chatClient = chatClient;
         this.model = model;
         this.systemPrompt = systemPrompt;
         this.chatMemoryService = chatMemoryService;
+        this.aiProperties = aiProperties;
     }
 
     public ChatResponse reply(String question,  String requestRole, String sessionId) {
@@ -83,7 +87,7 @@ public class ChatService {
             return role.getRolePrompt();
         }
 
-        return systemPrompt;
+        return aiProperties.systemPrompt();
     }
 
     private String buildUserPrompt(
