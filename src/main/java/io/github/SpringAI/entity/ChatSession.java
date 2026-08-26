@@ -44,7 +44,7 @@ public class ChatSession {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public ChatSession(String seesionId){
+    public ChatSession(String sessionId){
         this.sessionId = sessionId;
     }
 
