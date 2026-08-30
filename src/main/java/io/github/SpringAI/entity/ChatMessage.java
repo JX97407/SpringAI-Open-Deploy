@@ -50,7 +50,7 @@ public class ChatMessage {
     private String speaker;
 
     @Lob //消息正文可能较长，使用大文本类型保存
-    @Column(name = "content",nullable = false)
+    @Column(name = "content",nullable = false,columnDefinition = "LONGTEXT")
     private String content;
 
     @Column(name = "created_at",nullable = false)
