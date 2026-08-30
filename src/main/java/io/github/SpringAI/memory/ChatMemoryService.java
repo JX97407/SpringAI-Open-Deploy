@@ -1,11 +1,14 @@
 package io.github.SpringAI.memory;
 
 import io.github.SpringAI.config.AIProperties;
+import io.github.SpringAI.entity.ChatMessage;
+import io.github.SpringAI.entity.ChatSession;
+import io.github.SpringAI.repository.ChatMessageRepository;
+import io.github.SpringAI.repository.ChatSessionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -16,19 +19,38 @@ import java.util.stream.Collectors;
 @Service
 public class ChatMemoryService {
 
-    private final Map<String, List<ConversationMessage>> sessions = new ConcurrentHashMap<>();
     private final int maxMessages;
+    private final ChatSessionRepository chatSessionRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
+    public ChatMemoryService(
+            ChatSessionRepository chatSessionRepository,
+            ChatMessageRepository chatMessageRepository,
+            AIProperties aiProperties){
+
+        this.chatSessionRepository = chatSessionRepository;
+
+        this.chatMessageRepository = chatMessageRepository;
+
+        this.maxMessages = aiProperties.memory().maxMessages();
+    }
+
+    @Transactional(readOnly = true) // 表示这个事务只查询、不修改数据库，有助于表达方法意图
     public List<ConversationMessage> getHistory(String sessionId){
         if (sessionId == null || sessionId.isBlank()){
             return List.of();
         }
 
-        return List.copyOf(
-                sessions.getOrDefault(sessionId,List.of())
-        );
+        return chatMessageRepository
+                .findByChatSession_SessionIdOrderByCreatedAtAsc(sessionId)
+                .stream()
+                .map(message -> new ConversationMessage(
+                        message.getSpeaker(),
+                        message.getContent()
+                )).toList();
     }
 
+    @Transactional // 表示方法中的数据库操作属于同一个事务
     public void addMessage(
             String sessionId,
             ConversationMessage message
@@ -36,19 +58,28 @@ public class ChatMemoryService {
         if (sessionId == null || sessionId.isBlank()){
             return;
         }
-        List<ConversationMessage> messages = sessions.computeIfAbsent(
-                sessionId,
-                key -> new CopyOnWriteArrayList<>()
+
+        ChatSession chatSession = chatSessionRepository
+                .findBySessionId(sessionId)
+                .orElseGet(
+                        () ->
+                                chatSessionRepository.save(
+                                        new ChatSession(sessionId)
+                                )
+                );
+
+        chatMessageRepository.save(
+                new ChatMessage(
+                        chatSession,
+                        message.speaker(),
+                        message.content()
+                )
         );
 
-        messages.add(message);
-
-        //只保留最近的消息，避免历史记录和提示词无限增长
-        while(messages.size()>maxMessages){
-            messages.remove(0);
-        }
+        removeOldestMessage(chatSession);
     }
 
+    @Transactional(readOnly = true)
     public String buildContext(String sessionId){
         return getHistory(sessionId)
                 .stream()
@@ -57,16 +88,29 @@ public class ChatMemoryService {
                 ).collect(Collectors.joining("\n"));
     }
 
+    @Transactional
     public void clearHistory(String sessionId){
         if (sessionId == null || sessionId.isBlank()){
             return;
         }
 
-        sessions.remove(sessionId);
+        // 先删除消息，再删除会话，避免外键约束冲突
+        chatMessageRepository.deleteByChatSession_SessionId(sessionId);
+
+        chatSessionRepository
+                .findBySessionId(sessionId)
+                .ifPresent(chatSessionRepository::delete);
     }
 
-    public ChatMemoryService(AIProperties aiProperties){
-        this.maxMessages = aiProperties.memory().maxMessages();
-    }
+    /**
+     * 超过配置数量时，持续删除最早的消息
+     */
+    private void removeOldestMessage(ChatSession chatSession){
+        while(chatMessageRepository.countByChatSession(chatSession) > maxMessages){
 
+            chatMessageRepository
+                    .findFirstByChatSessionOrderByCreatedAtAsc(chatSession)
+                    .ifPresent(chatMessageRepository::delete);
+        }
+    }
 }
