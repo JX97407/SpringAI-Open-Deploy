@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
                 @Index(
                         name = "idx_chat_message_session_id",
                         columnList = "chat_session_id"
-                )
+                )  //@Index: 给会话外键添加索引，提高按会话查询消息的速度
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -42,13 +42,14 @@ public class ChatMessage {
             name = "chat_session_id",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_chat_message_session")
-    )
+    ) // JoinColumn: 指定外键列 chat_session_id
+      // ForeignKey: 为数据库外键指定清晰的名称
     private ChatSession chatSession;
 
     @Column(name = "speaker",nullable = false,length = 20)
     private String speaker;
 
-    @Lob
+    @Lob //消息正文可能较长，使用大文本类型保存
     @Column(name = "content",nullable = false)
     private String content;
 
