@@ -5,7 +5,6 @@ import io.github.SpringAI.dto.ChatResponse;
 import io.github.SpringAI.enums.ChatRole;
 import io.github.SpringAI.exception.AIChatException;
 import io.github.SpringAI.memory.ChatMemoryService;
-import io.github.SpringAI.memory.ConversationMessage;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,13 +56,10 @@ public class ChatService {
 
             long durationMs = System.currentTimeMillis() - startTime;
 
-            chatMemoryService.addMessage(
+            chatMemoryService.addConversation(
                     sessionId,
-                    new ConversationMessage("user",question)
-            );
-            chatMemoryService.addMessage(
-                    sessionId,
-                    new ConversationMessage("assistant",answer)
+                    question,
+                    answer
             );
 
             log.info("AI chat finished, model={}, durationMs={},answerLength={}", model, durationMs, answer.length());

@@ -79,6 +79,43 @@ public class ChatMemoryService {
         removeOldestMessage(chatSession);
     }
 
+    @Transactional
+    public void addConversation(
+            String sessionId,
+            String question,
+            String answer
+    ){
+        if (sessionId == null || sessionId.isBlank()){
+            return;
+        }
+
+        ChatSession chatSession = chatSessionRepository
+                .findBySessionId(sessionId)
+                .orElseGet(
+                        () -> chatSessionRepository.save(
+                                new ChatSession(sessionId)
+                        )
+                );
+
+        chatMessageRepository.save(
+                new ChatMessage(
+                        chatSession,
+                        "user",
+                        question
+                )
+        );
+
+        chatMessageRepository.save(
+                new ChatMessage(
+                        chatSession,
+                        "assistant",
+                        answer
+                )
+        );
+
+        removeOldestMessage(chatSession);
+    }
+
     @Transactional(readOnly = true)
     public String buildContext(String sessionId){
         return getHistory(sessionId)
