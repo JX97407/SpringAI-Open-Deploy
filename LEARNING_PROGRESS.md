@@ -60,15 +60,23 @@
 
 ## 当前学习节点
 
-当前阶段：完成配置类重构并准备接入 MySQL。
+当前阶段：完成 MySQL 持久化接入，进入事务边界与会话数据管理。
 
-当前阶段补充：配置类 `AIProperties` 已创建，并使用 `@ConfigurationProperties(prefix = "app.ai")` 绑定自定义配置；接下来完成重复注入清理，再进入 MySQL 持久化。
+已完成配置类重构和数据库持久化验证：
 
 - 在 `application.yml` 中增加 `app.ai.memory.max-messages` 配置。
 - 已在 `ChatMemoryService` 中通过 `AIProperties` 读取最大消息数量。
-- 添加新消息后删除最早消息，避免内存和模型提示词无限增长。
-- 使用 APIFox 连续发送多轮消息，确认历史记录最多保留配置数量。
-- 待清理 `ChatService` 中重复的 `systemPrompt` 字段和 `@Value` 注入，并使用 `mvn test`、`mvn spring-boot:run` 验证配置重构。
+- `ChatService` 已清理重复的 `systemPrompt` 字段和 `@Value` 注入。
+- 聊天会话和消息已经通过 JPA 保存到 MySQL。
+- 已修正消息正文容量，接口调用和数据库保存均已正常运行。
+- 已验证聊天接口能够正常返回，数据库中存在对应的用户消息和 AI 消息。
+
+下一步学习：
+
+- 验证应用重启后历史消息仍然存在。
+- 验证清空会话接口是否同时删除消息和会话。
+- 理解 `@Transactional` 的事务边界、外键约束和删除顺序。
+- 评估将用户消息和 AI 消息合并为一次事务保存的设计。
 
 ## 学习中需要重点理解的知识
 
