@@ -1,6 +1,7 @@
 package io.github.SpringAI.memory;
 
 import io.github.SpringAI.config.AIProperties;
+import io.github.SpringAI.dto.ChatMessageResponse;
 import io.github.SpringAI.entity.ChatMessage;
 import io.github.SpringAI.entity.ChatSession;
 import io.github.SpringAI.repository.ChatMessageRepository;
@@ -19,6 +20,9 @@ import java.util.stream.Collectors;
 @Service
 public class ChatMemoryService {
 
+    private static final String USER_SPEAKER = "user";
+    private static final String ASSISTANT_SPEAKER = "assistant";
+
     private final int maxMessages;
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
@@ -32,7 +36,17 @@ public class ChatMemoryService {
 
         this.chatMessageRepository = chatMessageRepository;
 
-        this.maxMessages = aiProperties.memory().maxMessages();
+        int configuredMaxMessages = aiProperties.memory().maxMessages();
+
+        if (configuredMaxMessages <= 0){
+            throw new IllegalArgumentException("app.ai.memory.max-messages 必须大于0");
+        }
+
+        if (configuredMaxMessages %2 != 0){
+            throw new IllegalArgumentException("app.ai.memory.max-messages 必须是偶数");
+        }
+
+        this.maxMessages = configuredMaxMessages;
     }
 
     @Transactional(readOnly = true) // 表示这个事务只查询、不修改数据库，有助于表达方法意图
@@ -42,7 +56,7 @@ public class ChatMemoryService {
         }
 
         return chatMessageRepository
-                .findByChatSession_SessionIdOrderByCreatedAtAsc(sessionId)
+                .findByChatSession_SessionIdOrderByCreatedAtAscIdAsc(sessionId)
                 .stream()
                 .map(message -> new ConversationMessage(
                         message.getSpeaker(),
@@ -59,14 +73,7 @@ public class ChatMemoryService {
             return;
         }
 
-        ChatSession chatSession = chatSessionRepository
-                .findBySessionId(sessionId)
-                .orElseGet(
-                        () ->
-                                chatSessionRepository.save(
-                                        new ChatSession(sessionId)
-                                )
-                );
+        ChatSession chatSession = getOrCreateSession(sessionId);
 
         chatMessageRepository.save(
                 new ChatMessage(
@@ -89,18 +96,12 @@ public class ChatMemoryService {
             return;
         }
 
-        ChatSession chatSession = chatSessionRepository
-                .findBySessionId(sessionId)
-                .orElseGet(
-                        () -> chatSessionRepository.save(
-                                new ChatSession(sessionId)
-                        )
-                );
+        ChatSession chatSession = getOrCreateSession(sessionId);
 
         chatMessageRepository.save(
                 new ChatMessage(
                         chatSession,
-                        "user",
+                        USER_SPEAKER,
                         question
                 )
         );
@@ -108,7 +109,7 @@ public class ChatMemoryService {
         chatMessageRepository.save(
                 new ChatMessage(
                         chatSession,
-                        "assistant",
+                        ASSISTANT_SPEAKER,
                         answer
                 )
         );
@@ -139,15 +140,49 @@ public class ChatMemoryService {
                 .ifPresent(chatSessionRepository::delete);
     }
 
+    @Transactional(readOnly = true)
+    public List<ChatMessageResponse> getStoredMessages(String sessionId){
+        if (sessionId == null || sessionId.isBlank()){
+            return List.of();
+        }
+
+        return chatMessageRepository
+                .findByChatSession_SessionIdOrderByCreatedAtAscIdAsc(sessionId)
+                .stream()
+                .map(message -> new ChatMessageResponse(
+                        message.getSpeaker(),
+                        message.getContent(),
+                        message.getCreatedAt()
+                )).toList();
+    }
+
+    private ChatSession getOrCreateSession(String sessionId){
+        return chatSessionRepository
+                .findBySessionId(sessionId)
+                .orElseGet(
+                        () -> chatSessionRepository.save(
+                                new ChatSession(sessionId)
+                        )
+                );
+    }
+
     /**
      * 超过配置数量时，持续删除最早的消息
      */
     private void removeOldestMessage(ChatSession chatSession){
         while(chatMessageRepository.countByChatSession(chatSession) > maxMessages){
 
-            chatMessageRepository
-                    .findFirstByChatSessionOrderByCreatedAtAsc(chatSession)
-                    .ifPresent(chatMessageRepository::delete);
+            List<ChatMessage> oldestMessages =
+                    chatMessageRepository
+                            .findTop2ByChatSessionOrderByCreatedAtAscIdAsc(
+                                    chatSession
+                            );
+
+            if (oldestMessages.isEmpty()){
+                return;
+            }
+
+            chatMessageRepository.deleteAll(oldestMessages);
         }
     }
 }

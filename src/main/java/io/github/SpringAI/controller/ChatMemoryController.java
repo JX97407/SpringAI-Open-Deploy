@@ -1,5 +1,4 @@
 package io.github.SpringAI.controller;
-
 import io.github.SpringAI.dto.ChatMessageResponse;
 import io.github.SpringAI.memory.ChatMemoryService;
 import io.github.SpringAI.vo.ReturnVO;
@@ -25,14 +24,7 @@ public class ChatMemoryController {
     public ReturnVO<List<ChatMessageResponse>>getHistory(
             @PathVariable String sessionId
     ){
-        List<ChatMessageResponse> messages = chatMemoryService.getHistory(sessionId)
-                .stream()
-                .map(message -> new ChatMessageResponse(
-                        message.speaker(),
-                        message.content()
-                )).toList();
-
-        return ReturnVO.success(messages);
+        return ReturnVO.success(chatMemoryService.getStoredMessages(sessionId));
     }
 
     @DeleteMapping("/{sessionId}")

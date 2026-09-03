@@ -1,5 +1,7 @@
 package io.github.SpringAI.dto;
 
+import java.time.LocalDateTime;
+
 /**
  * @Description 聊天历史消息返回对象
  * @Author 刘争伟
@@ -7,6 +9,7 @@ package io.github.SpringAI.dto;
  **/
 public record ChatMessageResponse (
         String speaker,
-        String content
+        String content,
+        LocalDateTime createdAt
 ){
 }
