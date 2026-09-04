@@ -1,5 +1,6 @@
 package io.github.SpringAI.controller;
 import io.github.SpringAI.dto.ChatMessageResponse;
+import io.github.SpringAI.entity.User;
 import io.github.SpringAI.memory.ChatMemoryService;
 import io.github.SpringAI.vo.ReturnVO;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +23,10 @@ public class ChatMemoryController {
 
     @GetMapping("/{sessionId}/messages")
     public ReturnVO<List<ChatMessageResponse>>getHistory(
-            @PathVariable String sessionId
-    ){
-        return ReturnVO.success(chatMemoryService.getStoredMessages(sessionId));
+            @PathVariable String sessionId,
+            @RequestBody long userId
+            ){
+        return ReturnVO.success(chatMemoryService.getStoredMessages(userId,sessionId));
     }
 
     @DeleteMapping("/{sessionId}")

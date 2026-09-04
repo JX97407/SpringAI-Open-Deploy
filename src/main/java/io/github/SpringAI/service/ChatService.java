@@ -37,12 +37,12 @@ public class ChatService {
         this.aiProperties = aiProperties;
     }
 
-    public ChatResponse reply(String question,  String requestRole, String sessionId) {
+    public ChatResponse reply(String question,  String requestRole, String sessionId, Long userId) {
 
         long startTime = System.currentTimeMillis();
 
         String finalSystemPrompt = getFinalSystemPrompt(requestRole);
-        String history = chatMemoryService.buildContext(sessionId);
+        String history = chatMemoryService.buildContext(userId,sessionId);
         String userPrompt = buildUserPrompt(history,question);
 
         log.info("AI chat started , model={}, question={}",model,question);
@@ -57,6 +57,7 @@ public class ChatService {
             long durationMs = System.currentTimeMillis() - startTime;
 
             chatMemoryService.addConversation(
+                    userId,
                     sessionId,
                     question,
                     answer

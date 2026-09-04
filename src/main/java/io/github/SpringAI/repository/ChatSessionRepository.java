@@ -15,5 +15,7 @@ import java.util.Optional;
  * @author lzw
  */
 public interface ChatSessionRepository  extends JpaRepository<ChatSession, Long> {
+    Optional<ChatSession> findByUser_IdAndSessionId(Long userId, String sessionId);
+
     Optional<ChatSession> findBySessionId(String sessionId);
 }

@@ -4,8 +4,10 @@ import io.github.SpringAI.config.AIProperties;
 import io.github.SpringAI.dto.ChatMessageResponse;
 import io.github.SpringAI.entity.ChatMessage;
 import io.github.SpringAI.entity.ChatSession;
+import io.github.SpringAI.entity.User;
 import io.github.SpringAI.repository.ChatMessageRepository;
 import io.github.SpringAI.repository.ChatSessionRepository;
+import io.github.SpringAI.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,15 +28,19 @@ public class ChatMemoryService {
     private final int maxMessages;
     private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final UserRepository userRepository;
 
     public ChatMemoryService(
             ChatSessionRepository chatSessionRepository,
             ChatMessageRepository chatMessageRepository,
+            UserRepository userRepository,
             AIProperties aiProperties){
 
         this.chatSessionRepository = chatSessionRepository;
 
         this.chatMessageRepository = chatMessageRepository;
+
+        this.userRepository = userRepository;
 
         int configuredMaxMessages = aiProperties.memory().maxMessages();
 
@@ -64,39 +70,18 @@ public class ChatMemoryService {
                 )).toList();
     }
 
-    @Transactional // 表示方法中的数据库操作属于同一个事务
-    public void addMessage(
-            String sessionId,
-            ConversationMessage message
-    ){
-        if (sessionId == null || sessionId.isBlank()){
-            return;
-        }
-
-        ChatSession chatSession = getOrCreateSession(sessionId);
-
-        chatMessageRepository.save(
-                new ChatMessage(
-                        chatSession,
-                        message.speaker(),
-                        message.content()
-                )
-        );
-
-        removeOldestMessage(chatSession);
-    }
-
     @Transactional
     public void addConversation(
+            Long userId,
             String sessionId,
             String question,
             String answer
     ){
-        if (sessionId == null || sessionId.isBlank()){
+        if (userId == null || sessionId == null || sessionId.isBlank()){
             return;
         }
 
-        ChatSession chatSession = getOrCreateSession(sessionId);
+        ChatSession chatSession = getOrCreateSession(userId,sessionId);
 
         chatMessageRepository.save(
                 new ChatMessage(
@@ -118,8 +103,8 @@ public class ChatMemoryService {
     }
 
     @Transactional(readOnly = true)
-    public String buildContext(String sessionId){
-        return getHistory(sessionId)
+    public String buildContext(Long userId,String sessionId){
+        return getStoredMessagesForContext(userId,sessionId)
                 .stream()
                 .map(message ->
                         message.speaker() + ": " + message.content()
@@ -141,28 +126,42 @@ public class ChatMemoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChatMessageResponse> getStoredMessages(String sessionId){
-        if (sessionId == null || sessionId.isBlank()){
+    public List<ChatMessageResponse> getStoredMessages(Long userId,String sessionId){
+        if (userId == null || sessionId == null || sessionId.isBlank()){
             return List.of();
         }
 
-        return chatMessageRepository
-                .findByChatSession_SessionIdOrderByCreatedAtAscIdAsc(sessionId)
+        return chatSessionRepository
+                .findByUser_IdAndSessionId(userId,sessionId)
+                .map(chatSession ->
+                        chatMessageRepository
+                                .findByChatSession_SessionIdOrderByCreatedAtAscIdAsc(
+                                        chatSession.getSessionId()
+                                )
                 .stream()
                 .map(message -> new ChatMessageResponse(
                         message.getSpeaker(),
                         message.getContent(),
                         message.getCreatedAt()
-                )).toList();
+                )).toList()
+                ).orElseGet(List::of);
     }
 
-    private ChatSession getOrCreateSession(String sessionId){
+    private ChatSession getOrCreateSession(Long userId,String sessionId){
         return chatSessionRepository
-                .findBySessionId(sessionId)
+                .findByUser_IdAndSessionId(userId,sessionId)
                 .orElseGet(
-                        () -> chatSessionRepository.save(
-                                new ChatSession(sessionId)
-                        )
+                        () -> {
+                            User user = userRepository
+                                    .findById(userId)
+                                    .orElseThrow(
+                                            () -> new IllegalArgumentException("用户不存在")
+                                    );
+
+                            return chatSessionRepository.save(
+                                    new ChatSession(sessionId, user)
+                            );
+                        }
                 );
     }
 
@@ -184,5 +183,29 @@ public class ChatMemoryService {
 
             chatMessageRepository.deleteAll(oldestMessages);
         }
+    }
+
+    /**
+     * 避免把接口返回DTO用作AI内部对象
+     */
+
+    private List<ConversationMessage> getStoredMessagesForContext(Long userId,String sessionId){
+        if (userId == null || sessionId == null || sessionId.isBlank()){
+            return List.of();
+        }
+
+        return chatSessionRepository
+                .findByUser_IdAndSessionId(userId, sessionId)
+                .map(chatSession ->
+                        chatMessageRepository
+                                .findByChatSession_SessionIdOrderByCreatedAtAscIdAsc(
+                                        chatSession.getSessionId()
+                                )
+                                .stream()
+                                .map(message -> new ConversationMessage(
+                                        message.getSpeaker(),
+                                        message.getContent()
+                                )).toList()
+                ).orElseGet(List::of);
     }
 }

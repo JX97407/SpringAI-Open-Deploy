@@ -24,7 +24,13 @@ import java.time.LocalDateTime;
                     name = "uk_chat_session_session_id",
                     columnNames = "session_id"
             )
-}
+},
+        indexes = {
+                @Index(
+                        name = "idx_chat_session_user_id",
+                        columnList = "user_id"
+                )
+        }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatSession {
@@ -36,14 +42,28 @@ public class ChatSession {
     @Column(name = "session_id", nullable = false, length = 64) // @Column：该字段不允许为null
     private String sessionId;
 
+    /**
+     * 当前会话所属的用户
+     *
+     * 一个用户可以拥有多个会话，
+     * 但一个会话只属于一个用户。
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(
+            name = "user_id",
+            foreignKey = @ForeignKey(name = "fk_chat_session_user")
+    )
+    private User user;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public ChatSession(String sessionId){
+    public ChatSession(String sessionId, User user){
         this.sessionId = sessionId;
+        this.user = user;
     }
 
     @PrePersist //首次插入数据库前自动执行

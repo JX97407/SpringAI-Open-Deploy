@@ -2,6 +2,7 @@ package io.github.SpringAI.vo;
 
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -22,4 +23,7 @@ public class ChatQueryVO {
 
 @Size(max = 64,message = "sessionId长度不能超过64个字符")
     private String sessionId;
+
+@NotNull(message = "userId不能为空")
+    private Long userId;
 }
