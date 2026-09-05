@@ -47,14 +47,33 @@ public class ChatService {
 
         log.info("AI chat started , model={}, question={}",model,question);
 
+        String answer;
+
         try {
-            String answer = chatClient.prompt()
+            answer = chatClient.prompt()
                     .system(finalSystemPrompt)
                     .user(userPrompt)
                     .call()
                     .content();
-
+        }catch (Exception e){
             long durationMs = System.currentTimeMillis() - startTime;
+
+            log.error(
+                    "AI chat failed ,model={}, durationMs={}, question={}",
+                    model,
+                    durationMs,
+                    question,
+                    e
+            );
+
+            throw new AIChatException(
+                    "AI调用失败，请稍后重试",
+                    e
+            );
+        }
+
+
+        long durationMs = System.currentTimeMillis() - startTime;
 
             chatMemoryService.addConversation(
                     userId,
@@ -66,13 +85,7 @@ public class ChatService {
             log.info("AI chat finished, model={}, durationMs={},answerLength={}", model, durationMs, answer.length());
 
             return new ChatResponse(question, answer, model, durationMs, sessionId);
-        }catch (Exception e){
-            long durationMs = System.currentTimeMillis() - startTime;
 
-            log.error("AI chat failed, model={}, durationMs={}, question={}", model, durationMs, question, e);
-
-            throw new AIChatException("AI模型调用失败，请稍后重试",e);
-        }
     }
     private String getFinalSystemPrompt(String requestRole){
         ChatRole role = ChatRole.fromName(requestRole);

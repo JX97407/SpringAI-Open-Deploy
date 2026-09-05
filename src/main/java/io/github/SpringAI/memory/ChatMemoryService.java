@@ -5,6 +5,7 @@ import io.github.SpringAI.dto.ChatMessageResponse;
 import io.github.SpringAI.entity.ChatMessage;
 import io.github.SpringAI.entity.ChatSession;
 import io.github.SpringAI.entity.User;
+import io.github.SpringAI.exception.ChatSessionConflictException;
 import io.github.SpringAI.repository.ChatMessageRepository;
 import io.github.SpringAI.repository.ChatSessionRepository;
 import io.github.SpringAI.repository.UserRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -148,21 +150,54 @@ public class ChatMemoryService {
     }
 
     private ChatSession getOrCreateSession(Long userId,String sessionId){
-        return chatSessionRepository
-                .findByUser_IdAndSessionId(userId,sessionId)
-                .orElseGet(
-                        () -> {
-                            User user = userRepository
-                                    .findById(userId)
-                                    .orElseThrow(
-                                            () -> new IllegalArgumentException("用户不存在")
-                                    );
+        Optional<ChatSession> ownedSession = chatSessionRepository.findByUser_IdAndSessionId(userId,sessionId);
 
-                            return chatSessionRepository.save(
-                                    new ChatSession(sessionId, user)
-                            );
-                        }
+        /*
+         * 查询当前用户是否已经拥有这个会话
+         */
+        if (ownedSession.isPresent()){
+            return ownedSession.get();
+        }
+
+        /*
+         * 判断用户是否已经存在
+         */
+        if (!userRepository.existsById(userId)){
+            throw new IllegalArgumentException("用户不存在");
+        }
+
+        Optional<ChatSession> existingSession = chatSessionRepository.findBySessionId(sessionId);
+
+        /*
+         * 检查这个sessionId是否已经被其他记录占用
+         */
+        if (existingSession.isPresent()){
+            ChatSession session = existingSession.get();
+
+            if (session.getUser() == null){
+                throw new ChatSessionConflictException(
+                        "该sessionId是旧会话，尚未绑定用户，请先迁移或更换sessionId"
                 );
+            }
+
+            /*
+              已占用则抛出会话冲突异常
+             */
+            throw new ChatSessionConflictException("该sessionId已被其他用户使用，请更换sessionId");
+        }
+
+        /*
+         * 没有占用则创建新的会话
+         */
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(
+                        () -> new IllegalArgumentException("用户不存在")
+                );
+
+        return chatSessionRepository.save(
+                new ChatSession(sessionId,user)
+        );
     }
 
     /**
