@@ -66,6 +66,15 @@ public class ChatSession {
         this.user = user;
     }
 
+    /**
+     * 更新会话最后活动时间
+     * 每当当前会话产生新消息时调用，
+     * 用于让前端按照最近使用时间展示会话
+     */
+    public void refreshUpdatedAt(){
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @PrePersist //首次插入数据库前自动执行
     private void beforeInsert(){
         LocalDateTime now = LocalDateTime.now();

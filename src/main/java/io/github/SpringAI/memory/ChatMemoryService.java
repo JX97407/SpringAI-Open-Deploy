@@ -2,6 +2,7 @@ package io.github.SpringAI.memory;
 
 import io.github.SpringAI.config.AIProperties;
 import io.github.SpringAI.dto.ChatMessageResponse;
+import io.github.SpringAI.dto.ChatSessionResponse;
 import io.github.SpringAI.entity.ChatMessage;
 import io.github.SpringAI.entity.ChatSession;
 import io.github.SpringAI.entity.User;
@@ -57,21 +58,6 @@ public class ChatMemoryService {
         this.maxMessages = configuredMaxMessages;
     }
 
-    @Transactional(readOnly = true) // 表示这个事务只查询、不修改数据库，有助于表达方法意图
-    public List<ConversationMessage> getHistory(String sessionId){
-        if (sessionId == null || sessionId.isBlank()){
-            return List.of();
-        }
-
-        return chatMessageRepository
-                .findByChatSession_SessionIdOrderByCreatedAtAscIdAsc(sessionId)
-                .stream()
-                .map(message -> new ConversationMessage(
-                        message.getSpeaker(),
-                        message.getContent()
-                )).toList();
-    }
-
     @Transactional
     public void addConversation(
             Long userId,
@@ -101,6 +87,8 @@ public class ChatMemoryService {
                 )
         );
 
+        chatSession.refreshUpdatedAt();
+
         removeOldestMessage(chatSession);
     }
 
@@ -114,17 +102,22 @@ public class ChatMemoryService {
     }
 
     @Transactional
-    public void clearHistory(String sessionId){
-        if (sessionId == null || sessionId.isBlank()){
+    public void clearHistory(String sessionId, Long userId){
+        if (userId == null || sessionId == null || sessionId.isBlank()){
             return;
         }
 
-        // 先删除消息，再删除会话，避免外键约束冲突
+        ChatSession chatSession = chatSessionRepository
+                .findByUser_IdAndSessionId(userId, sessionId)
+                .orElse(null);
+
+        if (chatSession == null){
+            return;
+        }
+
         chatMessageRepository.deleteByChatSession_SessionId(sessionId);
 
-        chatSessionRepository
-                .findBySessionId(sessionId)
-                .ifPresent(chatSessionRepository::delete);
+        chatSessionRepository.delete(chatSession);
     }
 
     @Transactional(readOnly = true)
@@ -147,6 +140,19 @@ public class ChatMemoryService {
                         message.getCreatedAt()
                 )).toList()
                 ).orElseGet(List::of);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatSessionResponse> getUserSessions(Long userId){
+        if (userId == null){
+            return List.of();
+        }
+
+        return  chatSessionRepository
+                .findAllByUser_IdOrderByUpdatedAtDesc(userId)
+                .stream()
+                .map(ChatSessionResponse::from)
+                .toList();
     }
 
     private ChatSession getOrCreateSession(Long userId,String sessionId){
