@@ -19,7 +19,7 @@ import lombok.Data;
 @Data
 public class UserCreateVO {
 
-    @NotBlank(message = "username不能为空")
-    @Size(max = 50, message = "username长度不能超过50个字符")
+    @NotBlank(message = "userName不能为空")
+    @Size(max = 50, message = "userName长度不能超过50个字符")
     private String userName;
 }
