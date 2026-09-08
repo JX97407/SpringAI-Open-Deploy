@@ -3,6 +3,8 @@ package io.github.SpringAI.controller;
 import io.github.SpringAI.dto.RoleOption;
 import io.github.SpringAI.enums.ChatRole;
 import io.github.SpringAI.vo.ReturnVO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,9 +19,11 @@ import java.util.List;
  **/
 @RestController
 @RequestMapping("/ai")
+@Tag(name = "角色表")
 public class RoleController {
 
     @GetMapping("/roles")
+    @Operation(summary = "查询角色")
     public ReturnVO<List<RoleOption>>listRoles(){
         List<RoleOption> roles = Arrays.stream(ChatRole.values())
                 .map(role -> new RoleOption(

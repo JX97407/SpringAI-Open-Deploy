@@ -10,6 +10,8 @@ import io.github.SpringAI.entity.User;
 import io.github.SpringAI.repository.UserRepository;
 import io.github.SpringAI.vo.ReturnVO;
 import io.github.SpringAI.vo.UserCreateVO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("ai/users")
+@Tag(name = "用户表")
 public class UserController {
 
     private final UserRepository userRepository;
@@ -32,9 +35,10 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "创建新用户")
     public ReturnVO<UserResponse> createUser(@Valid @RequestBody UserCreateVO request){
         if (userRepository.existsByUserName(request.getUserName())){
-            return ReturnVO.fail(409,"Username已经存在");
+            return ReturnVO.fail(409,"UserName已经存在");
         }
 
         User user = userRepository.save(
