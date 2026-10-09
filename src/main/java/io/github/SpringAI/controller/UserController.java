@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -34,19 +35,24 @@ public class UserController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "创建新用户")
-    public ReturnVO<UserResponse> createUser(@Valid @RequestBody UserCreateVO request){
+    public ResponseEntity<ReturnVO<UserResponse>> createUser(@Valid @RequestBody UserCreateVO request){
         if (userRepository.existsByUserName(request.getUserName())){
-            return ReturnVO.fail(409,"UserName已经存在");
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ReturnVO.<UserResponse>fail(
+                            409,"用户名已经存在"
+                    ));
         }
 
         User user = userRepository.save(
                 new User(request.getUserName())
         );
 
-        return ReturnVO.success(
-                UserResponse.from(user)
-        );
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ReturnVO<>(
+                        201,
+                        "success",
+                        UserResponse.from(user)
+                ));
     }
 }

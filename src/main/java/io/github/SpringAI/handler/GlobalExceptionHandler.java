@@ -3,10 +3,12 @@ package io.github.SpringAI.handler;
 import io.github.SpringAI.exception.AIChatException;
 import io.github.SpringAI.exception.ChatSessionConflictException;
 import io.github.SpringAI.vo.ReturnVO;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
@@ -19,6 +21,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ReturnVO<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e){
         String message = e.getBindingResult()
                 .getFieldError()
@@ -27,26 +30,31 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ReturnVO<Void> handleException(Exception e){
         return ReturnVO.fail(500, "服务器异常");
     }
 
     @ExceptionHandler(AIChatException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ReturnVO<Void> handleAIChatException(AIChatException e){
         return ReturnVO.fail(500, e.getMessage());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ReturnVO<Void> handleJsonError(HttpMessageNotReadableException e){
         return ReturnVO.fail(400, "请求体格式错误，请检查字段类型");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ReturnVO<Void> handleIllegalArgumentException(IllegalArgumentException e){
         return ReturnVO.fail(400, e.getMessage());
     }
 
     @ExceptionHandler(ChatSessionConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
     public ReturnVO<Void> handleChatSessionConflictException(ChatSessionConflictException e){
         return ReturnVO.fail(409,e.getMessage());
     }
@@ -55,6 +63,7 @@ public class GlobalExceptionHandler {
      *处理请求中缺少的必填查询参数的异常
      */
     @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ReturnVO<Void> handleMissingServletRequestParameterException(MissingServletRequestParameterException e){
         return ReturnVO.fail(400,"缺少必要请求参数；" + e.getParameterName());
     }
@@ -63,6 +72,7 @@ public class GlobalExceptionHandler {
      *处理请求参数类型转换失败的异常
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ReturnVO<Void> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e){
         return ReturnVO.fail(400,"请求体参数错误" + e.getName());
     }
