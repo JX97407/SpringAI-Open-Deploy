@@ -70,6 +70,10 @@ public class ChatSession {
         this.title = "新对话";
     }
 
+    public void rename(String title){
+        this.title = title.strip();
+    }
+
     /**
      * 更新会话最后活动时间
      * 每当当前会话产生新消息时调用，

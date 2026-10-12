@@ -2,9 +2,11 @@ package io.github.SpringAI.controller;
 import io.github.SpringAI.dto.ChatMessageResponse;
 import io.github.SpringAI.dto.ChatSessionResponse;
 import io.github.SpringAI.memory.ChatMemoryService;
+import io.github.SpringAI.vo.ChatSessionTitleVO;
 import io.github.SpringAI.vo.ReturnVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,5 +59,19 @@ public class ChatMemoryController {
         return ReturnVO.success(chatMemoryService.getUserSessions(userId));
     }
 
+    @PatchMapping("/{sessionId}/title") //PatchMapping 表示局部修改：本次只修改标题
+    @Operation(summary = "修改指定用户的会话标题")
+    public ReturnVO<Void> renameSession(
+            @PathVariable("userId") Long userId,
+            @PathVariable("sessionId") String sessionId,
+            @Valid @RequestBody ChatSessionTitleVO request
+            ){
+        chatMemoryService.renameSession(
+                userId,
+                sessionId,
+                request.getTitle()
+        );
 
+        return ReturnVO.success(null);
+    }
 }

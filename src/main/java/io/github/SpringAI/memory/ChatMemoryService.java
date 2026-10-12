@@ -155,6 +155,21 @@ public class ChatMemoryService {
                 .toList();
     }
 
+    @Transactional
+    public void renameSession(
+            Long userId,
+            String sessionId,
+            String title
+    ){
+        //必须同时检查用户和会话，避免修改其他用户的标题
+        ChatSession session = chatSessionRepository
+                .findByUser_IdAndSessionId(userId,sessionId)
+                .orElseThrow(()-> new IllegalArgumentException(
+                        "会话不存在或不属于当前用户"
+                ));
+        session.rename(title);
+    }
+
     private ChatSession getOrCreateSession(Long userId,String sessionId){
         Optional<ChatSession> ownedSession = chatSessionRepository.findByUser_IdAndSessionId(userId,sessionId);
 
