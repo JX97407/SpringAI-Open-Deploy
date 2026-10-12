@@ -61,9 +61,13 @@ public class ChatSession {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "title",length = 100)
+    private String title;
+
     public ChatSession(String sessionId, User user){
         this.sessionId = sessionId;
         this.user = user;
+        this.title = "新对话";
     }
 
     /**

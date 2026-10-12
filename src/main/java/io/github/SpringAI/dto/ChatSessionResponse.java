@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
  */
 public record ChatSessionResponse(
         String sessionId,
+        String title,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -26,8 +27,15 @@ public record ChatSessionResponse(
      */
 
     public static ChatSessionResponse from(ChatSession session){
+        String title = session.getTitle();
+
+        //兼容添加标题功能前已经存在的会话
+        if (title == null || title.isBlank()){
+            title = "新对话";
+        }
         return new ChatSessionResponse(
                 session.getSessionId(),
+                title,
                 session.getCreatedAt(),
                 session.getUpdatedAt()
         );
